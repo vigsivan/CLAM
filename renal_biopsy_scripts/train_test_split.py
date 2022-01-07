@@ -9,16 +9,15 @@ import pandas as pd
 import typer
 
 from sheets import get_subject_slides_mapping, get_tables
-
-CLAM_PATIENT_ID = "case_id"
-CLAM_SLIDE_ID = "slide_id"
-SLIDE_EXT = ".svs"
-STAINS = ('H&E', 'PAS', 'Trichrome')
+from config import (
+    get_multimodal_renal_dataset_directories,
+    CLAM_PATIENT_ID,
+    CLAM_SLIDE_ID,
+    SLIDE_EXT,
+    STAINS,
+)
 
 Mapping = Dict[str, Dict[str,str]]
-
-# parameters
-root: Path = Path("/media/vsivan/Untitled/multimodal_renal")
 
 def write_list_to_file(filename: Path, li: List[str]):
     """Writes a list to a file
@@ -71,19 +70,13 @@ def main(root: Path, output_dir: Path, test_pct: float=.25, random_seed: int=42)
         split_slides = df_split[CLAM_SLIDE_ID].tolist()
         split_subjects = df_split[CLAM_PATIENT_ID].unique().tolist()
 
+        # remove extension from split slides
+        split_slides = [s.split('.')[0] for s in split_slides]
+
         write_list_to_file(split_dir/"slides.txt", split_slides)
         write_list_to_file(split_dir/"subjects.txt", split_subjects)
 
         df_split.to_csv(split_dir/"data.csv", index=False)
-
-
-def get_multimodal_renal_dataset_directories(root: Path) -> Dict[str, Union[Path,List[Path]]]:
-    return {
-        "rejection_path" : root / "Sheets/Rejection & Infection Cases.xlsx",
-        "other_path" : root / "Sheets/Other Cases.xlsx",
-        "slides_folders": [root / "WSI" / i for i in ("Anonymized Slides", "Anonymized Slides #2")]
-    }
-
 
 def get_mapping_and_slides(root) -> Tuple[Mapping, List[str]]:
     dirs = get_multimodal_renal_dataset_directories(root)
